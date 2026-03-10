@@ -6,15 +6,15 @@ import os
 # Load embedding model once at startup (not on every request)
 print("Loading embedding model...")
 embeddings_model = HuggingFaceEmbeddings(
-    model_name="all-MiniLM-L6-v2",  # small, fast, free, runs locally
+    model_name="all-MiniLM-L6-v2",  
     model_kwargs={"device": "cpu"}
 )
-print("Embedding model loaded ✅")
+print("Embedding model loaded success")
 
 def chunk_text(text: str) -> list[str]:
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,       # ~500 chars per chunk
-        chunk_overlap=50,     # overlap so context isn't lost at boundaries
+        chunk_size=500,      
+        chunk_overlap=50,  #overlap so context isn't lost at boundaries
         separators=["\n\n", "\n", ".", " "]
     )
     chunks = splitter.split_text(text)
@@ -43,7 +43,7 @@ def load_vector_store(session_id: str) -> FAISS:
     vector_store = FAISS.load_local(
         save_path,
         embeddings_model,
-        allow_dangerous_deserialization=True  # safe since we wrote the file ourselves
+        allow_dangerous_deserialization=True  
     )
     return vector_store
 

@@ -6,7 +6,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
-  const [sessionId, setSessionId] = useState(null) // 👈 new
+  const [sessionId, setSessionId] = useState(null) //new
 
   const handleFile = (selectedFile) => {
     if (!selectedFile?.name.endsWith(".pdf")) {
@@ -41,7 +41,7 @@ export default function App() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || "Upload failed")
       setResult(data)
-      setSessionId(data.session_id) // 👈 new
+      setSessionId(data.session_id) //new
     } catch (err) {
       setError(err.message)
     } finally {
@@ -51,7 +51,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-8">
-      <h1 className="text-4xl font-bold text-indigo-400 mb-2">StudyBuddy 📚</h1>
+      <h1 className="text-4xl font-bold text-indigo-400 mb-2">DocXBud</h1>
       <p className="text-gray-400 mb-8">Upload your lecture notes to get started</p>
 
       <div
@@ -98,7 +98,7 @@ export default function App() {
 
       {result && (
         <div className="mt-6 bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-lg w-full">
-          <h2 className="text-lg font-semibold text-indigo-300 mb-3">✅ Knowledge Base Ready</h2>
+          <h2 className="text-lg font-semibold text-indigo-300 mb-3"> Knowledge Base Ready</h2>
           <div className="flex gap-6 mb-4 text-sm">
             <div>
               <p className="text-gray-500">Pages</p>
