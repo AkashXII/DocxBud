@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from processor import chunk_text, build_vector_store, search_vector_store
+from agent import run_qa
 import fitz
 import uuid
 
@@ -61,3 +62,14 @@ async def search(payload: dict):
 
     results = search_vector_store(session_id, query)
     return {"query": query, "results": results}
+
+@app.post("/ask")
+async def ask_question(payload: dict):
+    session_id = payload.get("session_id")
+    query = payload.get("query")
+
+    if not session_id or not query:
+        raise HTTPException(status_code=400, detail="session_id and query are required")
+
+    answer = run_qa(session_id, query)
+    return {"query": query, "answer": answer}
