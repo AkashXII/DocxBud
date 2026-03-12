@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from processor import chunk_text, build_vector_store, search_vector_store
-from agent import run_qa
+from agent import run_qa, run_flashcards
 import fitz
 import uuid
 
@@ -73,3 +73,12 @@ async def ask_question(payload: dict):
 
     answer = run_qa(session_id, query)
     return {"query": query, "answer": answer}
+
+@app.post("/flashcards")
+async def generate_flashcards(payload: dict):
+    session_id = payload.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+
+    flashcards = run_flashcards(session_id)
+    return {"flashcards": flashcards}
