@@ -79,19 +79,11 @@ export default function Dashboard({ email, onNewUpload, onResumeDoc, onLogout })
         position: "sticky", top: 0, zIndex: 10
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <div style={{
-            width: "32px", height: "32px", borderRadius: "9px",
-            background: "linear-gradient(135deg, #6339ff, #00d4ff)",
-            display: "flex", alignItems: "center", justifyContent: "center"
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
+
           <span style={{
             fontFamily: "'Syne', sans-serif", fontWeight: 700,
             fontSize: "1.1rem", color: "#fff"
-          }}>StudyBuddy</span>
+          }}>DocXBud</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
           <span style={{ color: "#4a4a6a", fontSize: "0.85rem" }}>{email}</span>

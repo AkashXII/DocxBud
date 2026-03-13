@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { api } from "../api"
 import PixelBlast from "../components/PixelBlast"
-
+import StarBorder from "../components/StarBorder"
 export default function Chat({ sessionId, documentId, filename, onFlashcards, onQuiz, onSummary,onBack }) {
   const [messages, setMessages] = useState([
     {
@@ -68,23 +68,24 @@ export default function Chat({ sessionId, documentId, filename, onFlashcards, on
     }
   }
 
-  return (
-  <div className="relative flex flex-col h-screen w-full text-white bg-black/10 backdrop-blur-xl">
+return (
+  <div className="relative flex flex-col h-screen w-full text-white  overflow-hidden">
 
     {/* PixelBlast Background */}
-    <div className="absolute inset-0 -z-10 pointer-events-none opacity-60">
+    <div className="absolute inset-0 -z-10 pointer-events-none opacity-70">
       <PixelBlast
         variant="square"
         pixelSize={4}
-        color="#6339ff"
-        patternDensity={0.8}
-        speed={0.3}
-        edgeFade={0.6}
+        color="#7c3aed"
+        patternDensity={0.75}
+        speed={0.2}
+        edgeFade={0.8}
       />
     </div>
 
     {/* Header */}
-    <div className="border-b border-gray-800 px-6 py-4 flex items-center gap-3">
+    <div className="border-b border-gray-800 px-6 py-4 flex items-center gap-3 bg-black/30 backdrop-blur-md">
+
       <button
         onClick={onBack}
         className="text-gray-400 hover:text-white text-sm transition-colors mr-2"
@@ -92,38 +93,39 @@ export default function Chat({ sessionId, documentId, filename, onFlashcards, on
         ← Back
       </button>
 
-      <span className="text-2xl">📚</span>
+      
 
       <div>
-        <h1 className="font-bold text-indigo-400">StudyBuddy</h1>
+        <h1 className="font-bold text-indigo-400">DocXBud</h1>
         <p className="text-xs text-gray-500 truncate max-w-xs">{filename}</p>
       </div>
 
       <div className="ml-auto flex items-center gap-3">
-        <button
-          onClick={onSummary}
-          className="text-sm px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-indigo-500 rounded-lg transition-colors"
-        >
-          📋 Summary
-        </button>
+      <StarBorder
+  as="button"
+  onClick={onSummary}
+  className="text-xs"
+>
+   Summary
+</StarBorder>
 
-        <button
-          onClick={onFlashcards}
-          className="text-sm px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-indigo-500 rounded-lg transition-colors"
-        >
-          🃏 Flashcards
-        </button>
+<StarBorder
+  as="button"
+  onClick={onFlashcards}
+  className="text-xs"
+>
+   Flashcards
+</StarBorder>
 
-        <button
-          onClick={onQuiz}
-          className="text-sm px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-indigo-500 rounded-lg transition-colors"
-        >
-          📝 Quiz
-        </button>
+<StarBorder
+  as="button"
+  onClick={onQuiz}
+  className="text-xs"
+>
+   Quiz
+</StarBorder>
+        
 
-        <span className="text-xs text-green-400 bg-green-950 border border-green-800 px-2 py-1 rounded-full">
-          ● Ready
-        </span>
       </div>
     </div>
 
@@ -168,8 +170,9 @@ export default function Chat({ sessionId, documentId, filename, onFlashcards, on
     </div>
 
     {/* Input */}
-    <div className="border-t border-gray-800 px-4 py-4">
+    <div className="border-t border-gray-800 px-4 py-4 bg-black/30 backdrop-blur-md">
       <div className="flex gap-3 max-w-3xl mx-auto">
+
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -186,6 +189,7 @@ export default function Chat({ sessionId, documentId, filename, onFlashcards, on
         >
           Send
         </button>
+
       </div>
 
       <p className="text-center text-gray-600 text-xs mt-2">

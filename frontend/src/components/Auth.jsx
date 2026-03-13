@@ -80,22 +80,13 @@ export default function Auth({ onLogin }) {
       }}>
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            width: "56px", height: "56px", borderRadius: "16px", marginBottom: "1rem",
-            background: "linear-gradient(135deg, #6339ff, #00d4ff)",
-            boxShadow: "0 0 40px rgba(99,57,255,0.4)"
-          }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
+
           <h1 style={{
             fontFamily: "'Syne', sans-serif", fontSize: "2rem",
             fontWeight: 800, color: "#fff", margin: 0, letterSpacing: "-0.02em"
-          }}>StudyBuddy</h1>
+          }}>DocXBud</h1>
           <p style={{ color: "#4a4a6a", fontSize: "0.9rem", marginTop: "0.4rem" }}>
-            Your AI-powered study assistant
+            AI-Powered Study Assistant
           </p>
         </div>
 
