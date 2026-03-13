@@ -1,7 +1,12 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException,Depends
 from fastapi.middleware.cors import CORSMiddleware
+from auth import hash_password, verify_password, create_token, get_current_user
+from database import users_collection, documents_collection, messages_collection
+from bson import ObjectId
+from datetime import datetime
+from pydantic import BaseModel
 from processor import chunk_text, build_vector_store, search_vector_store
-from agent import run_qa, run_flashcards
+from agent import run_qa, run_flashcards,run_quiz,run_summary
 import fitz
 import uuid
 
@@ -14,19 +19,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 @app.get("/health")
 def health_check():
     return {"status": "ok", "message": "StudyBuddy backend is running!"}
 
 @app.post("/upload")
-async def upload_pdf(file: UploadFile = File(...)):
+async def upload_pdf(
+    file: UploadFile = File(...),
+    current_user=Depends(get_current_user)
+):
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 
     contents = await file.read()
-
-    # Extract text
     pdf_doc = fitz.open(stream=contents, filetype="pdf")
     extracted_text = ""
     for page in pdf_doc:
@@ -37,18 +49,29 @@ async def upload_pdf(file: UploadFile = File(...)):
     if not extracted_text.strip():
         raise HTTPException(status_code=400, detail="Could not extract text from PDF")
 
-    # Chunk + embed + store
     chunks = chunk_text(extracted_text)
-    session_id = str(uuid.uuid4())  # unique ID for this upload session
+    session_id = str(uuid.uuid4())
     build_vector_store(chunks, session_id)
+
+    # Save to MongoDB
+    doc = {
+        "user_id": current_user["_id"],
+        "filename": file.filename,
+        "session_id": session_id,
+        "word_count": len(extracted_text.split()),
+        "page_count": page_count,
+        "chunk_count": len(chunks),
+        "created_at": datetime.utcnow()
+    }
+    result = documents_collection.insert_one(doc)
 
     return {
         "filename": file.filename,
         "word_count": len(extracted_text.split()),
         "page_count": page_count,
         "chunk_count": len(chunks),
-        "text_preview": extracted_text[:500],
-        "session_id": session_id  # frontend stores this, sends it with future requests
+        "session_id": session_id,
+        "document_id": str(result.inserted_id)
     }
 
 @app.post("/search")
@@ -64,21 +87,110 @@ async def search(payload: dict):
     return {"query": query, "results": results}
 
 @app.post("/ask")
-async def ask_question(payload: dict):
+async def ask_question(
+    payload: dict,
+    current_user=Depends(get_current_user)
+):
     session_id = payload.get("session_id")
     query = payload.get("query")
+    document_id = payload.get("document_id")
 
     if not session_id or not query:
         raise HTTPException(status_code=400, detail="session_id and query are required")
 
     answer = run_qa(session_id, query)
-    return {"query": query, "answer": answer}
 
+    # Save chat messages to MongoDB
+    if document_id:
+        messages_collection.insert_many([
+            {
+                "user_id": current_user["_id"],
+                "document_id": ObjectId(document_id),
+                "role": "user",
+                "content": query,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "user_id": current_user["_id"],
+                "document_id": ObjectId(document_id),
+                "role": "assistant",
+                "content": answer,
+                "created_at": datetime.utcnow()
+            }
+        ])
+
+    return {"query": query, "answer": answer}
 @app.post("/flashcards")
-async def generate_flashcards(payload: dict):
+async def generate_flashcards(payload: dict,current_user=Depends(get_current_user)):
     session_id = payload.get("session_id")
     if not session_id:
         raise HTTPException(status_code=400, detail="session_id is required")
 
     flashcards = run_flashcards(session_id)
     return {"flashcards": flashcards}
+@app.post("/quiz")
+async def generate_quiz(payload: dict,current_user=Depends(get_current_user)):
+    session_id = payload.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+
+    quiz = run_quiz(session_id)
+    return {"quiz": quiz}
+@app.post("/summary")
+async def generate_summary(payload: dict, current_user=Depends(get_current_user)):
+    session_id = payload.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+
+    summary = run_summary(session_id)
+    return {"summary": summary}
+@app.post("/auth/register")
+def register(body: RegisterRequest):
+    if users_collection.find_one({"email": body.email}):
+        raise HTTPException(status_code=400, detail="Email already registered")
+    if len(body.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    user = {
+        "email": body.email,
+        "password_hash": hash_password(body.password),
+        "created_at": datetime.utcnow()
+    }
+    result = users_collection.insert_one(user)
+    token = create_token(str(result.inserted_id))
+    return {"token": token, "email": body.email}
+
+@app.post("/auth/login")
+def login(body: LoginRequest):
+    user = users_collection.find_one({"email": body.email})
+    if not user or not verify_password(body.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    token = create_token(str(user["_id"]))
+    return {"token": token, "email": user["email"]}
+
+@app.get("/auth/me")
+def me(current_user=Depends(get_current_user)):
+    return {"email": current_user["email"], "id": str(current_user["_id"])}
+@app.get("/documents")
+def get_documents(current_user=Depends(get_current_user)):
+    docs = list(documents_collection.find(
+        {"user_id": current_user["_id"]},
+        sort=[("created_at", -1)]  # newest first
+    ))
+    for doc in docs:
+        doc["_id"] = str(doc["_id"])
+        doc["user_id"] = str(doc["user_id"])
+    return {"documents": docs}
+
+@app.get("/messages/{document_id}")
+def get_messages(document_id: str, current_user=Depends(get_current_user)):
+    msgs = list(messages_collection.find(
+        {"document_id": ObjectId(document_id)},
+        sort=[("created_at", 1)]
+    ))
+    for msg in msgs:
+        msg["_id"] = str(msg["_id"])
+        msg["user_id"] = str(msg["user_id"])
+        msg["document_id"] = str(msg["document_id"])
+    return {"messages": msgs}

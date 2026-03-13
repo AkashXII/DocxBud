@@ -1,5 +1,5 @@
 import { useState } from "react"
-
+import { api } from "../api"
 function FlashCard({ card, index }) {
   const [flipped, setFlipped] = useState(false)
 
@@ -56,13 +56,7 @@ export default function Flashcards({ sessionId, onBack }) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch("http://localhost:8000/flashcards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.detail || "Failed to generate")
+      const data = await api.post("/flashcards", { session_id: sessionId })
       setFlashcards(data.flashcards)
       setGenerated(true)
     } catch (err) {
