@@ -4,7 +4,12 @@ import os
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
-client = MongoClient(os.getenv("MONGODB_URL"))
+client = MongoClient(
+    os.getenv("MONGODB_URL"),
+    tls=True,
+    tlsAllowInvalidCertificates=False,
+    serverSelectionTimeoutMS=30000
+)
 db = client["studybuddy"]
 
 # Collections (like tables in SQL)
