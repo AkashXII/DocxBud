@@ -22,7 +22,7 @@ async def rate_limit_handler(request, exc):
     return JSONResponse(status_code=429, content={"detail": "Too many requests, slow down!"})
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173","https://*.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
