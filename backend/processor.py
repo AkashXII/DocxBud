@@ -1,54 +1,38 @@
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 import os
 
-# Load embedding model once at startup (not on every request)
 print("Loading embedding model...")
-embeddings_model = HuggingFaceEmbeddings(
-    model_name="all-MiniLM-L6-v2",  
-    model_kwargs={"device": "cpu"}
-)
-print("Embedding model loaded success")
+embeddings_model = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
+print("Embedding model loaded ✅")
 
 def chunk_text(text: str) -> list[str]:
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,      
-        chunk_overlap=50,  #overlap so context isn't lost at boundaries
+        chunk_size=500,
+        chunk_overlap=50,
         separators=["\n\n", "\n", ".", " "]
     )
-    chunks = splitter.split_text(text)
-    return chunks
+    return splitter.split_text(text)
 
 def build_vector_store(chunks: list[str], session_id: str) -> str:
-    """
-    Takes text chunks, embeds them, stores in FAISS.
-    Saves the index to disk keyed by session_id.
-    Returns the save path.
-    """
     vector_store = FAISS.from_texts(chunks, embeddings_model)
-    
     save_path = f"./faiss_indexes/{session_id}"
     os.makedirs(save_path, exist_ok=True)
     vector_store.save_local(save_path)
-    
     return save_path
 
 def load_vector_store(session_id: str) -> FAISS:
-    """Load a previously saved FAISS index."""
     save_path = f"./faiss_indexes/{session_id}"
     if not os.path.exists(save_path):
         raise FileNotFoundError(f"No index found for session: {session_id}")
-    
-    vector_store = FAISS.load_local(
+    return FAISS.load_local(
         save_path,
         embeddings_model,
-        allow_dangerous_deserialization=True  
+        allow_dangerous_deserialization=True
     )
-    return vector_store
 
 def search_vector_store(session_id: str, query: str, k: int = 4) -> list[str]:
-    """Search the vector store, return top-k relevant chunks."""
     vector_store = load_vector_store(session_id)
     results = vector_store.similarity_search(query, k=k)
     return [doc.page_content for doc in results]
