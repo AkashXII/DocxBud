@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { api } from "../api"
-import PixelBlast from "../components/PixelBlast"
+
 export default function Quiz({ sessionId, onBack }) {
   const [quiz, setQuiz] = useState([])
   const [loading, setLoading] = useState(false)
@@ -8,24 +8,25 @@ export default function Quiz({ sessionId, onBack }) {
   const [started, setStarted] = useState(false)
   const [current, setCurrent] = useState(0)
   const [selected, setSelected] = useState(null)
-  const [answers, setAnswers] = useState([]) // { selected, correct, question }
+  const [answers, setAnswers] = useState([])
   const [finished, setFinished] = useState(false)
 
-const generateQuiz = async () => {
-  setLoading(true)
-  setError(null)
-  try {
-    const data = await api.post("/quiz", { session_id: sessionId })
-    setQuiz(data.quiz)
-    setStarted(true)
-  } catch (err) {
-    setError(err.message)
-  } finally {
-    setLoading(false)
+  const generateQuiz = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await api.post("/quiz", { session_id: sessionId })
+      setQuiz(data.quiz)
+      setStarted(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
-}
+
   const handleSelect = (optionKey) => {
-    if (selected) return // already answered
+    if (selected) return
     setSelected(optionKey)
   }
 
@@ -37,7 +38,6 @@ const generateQuiz = async () => {
       correct: q.answer,
       isCorrect: selected === q.answer
     }])
-
     if (current + 1 >= quiz.length) {
       setFinished(true)
     } else {
@@ -65,189 +65,140 @@ const generateQuiz = async () => {
   }
 
   return (
-  <div className="relative min-h-screen w-full text-white overflow-hidden">
+    <div className="relative min-h-screen w-full text-white overflow-hidden">
+      <div className="relative z-10 max-w-2xl mx-auto px-6 py-8">
 
-    {/* PixelBlast background */}
-    <div className="absolute inset-0 -z-10 pointer-events-none opacity-90">
-      <PixelBlast
-        variant="square"
-        pixelSize={4}
-        color="#4c1d95"
-        patternDensity={0.75}
-        speed={0.2}
-        edgeFade={0.8}
-      />
-    </div>
-
-    {/* Foreground UI */}
-    <div className="relative z-10 p-6">
-      <div className="max-w-2xl mx-auto">
-
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <button
-            onClick={onBack}
-            className="text-gray-400 hover:text-white transition-colors text-sm"
+        {/* Boxed header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(99,57,255,0.3)",
+          borderRadius: "16px", padding: "1rem 1.5rem",
+          marginBottom: "2rem"
+        }}>
+          <button onClick={onBack} style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(99,57,255,0.4)",
+            borderRadius: "8px", padding: "0.4rem 1rem",
+            color: "#6a6a8a", fontSize: "0.8rem", cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif", transition: "all 0.2s"
+          }}
+            onMouseEnter={e => { e.target.style.color = "#fff"; e.target.style.borderColor = "rgba(255,255,255,0.2)" }}
+            onMouseLeave={e => { e.target.style.color = "#6a6a8a"; e.target.style.borderColor = "rgba(255,255,255,0.08)" }}
           >
             ← Back
           </button>
-          <h1 className="text-2xl font-bold text-indigo-400">Quiz </h1>
+          <h1 style={{
+            fontFamily: "'Syne', sans-serif", fontWeight: 700,
+            fontSize: "1.1rem", color: "#fff", margin: 0
+          }}>Quiz</h1>
+          <div style={{ width: "80px" }} />
         </div>
 
         {/* Start screen */}
         {!started && (
-          <div className="text-center py-16">
-            
-            <p className="text-gray-400 mb-6">
+          <div style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(99,57,255,0.4)",
+            borderRadius: "20px", padding: "4rem 2rem",
+            textAlign: "center"
+          }}>
+            <p style={{ color: "#4a4a6a", marginBottom: "1.5rem", fontSize: "0.95rem" }}>
               Test your knowledge with AI-generated questions
             </p>
-
-            <button
-              onClick={generateQuiz}
-              disabled={loading}
-              className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 rounded-lg font-semibold transition-colors"
-            >
-              {loading ? "Generating quiz..." : "Start Quiz"}
+            <button onClick={generateQuiz} disabled={loading} style={{
+              padding: "0.75rem 2rem",
+              background: "linear-gradient(135deg, #6339ff, #3b5b61)",
+              border: "none", borderRadius: "12px", color: "#fff",
+              fontSize: "0.95rem", fontWeight: 600, cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif",
+              boxShadow: "0 8px 32px rgba(99,57,255,0.35)",
+              opacity: loading ? 0.5 : 1, transition: "all 0.2s"
+            }}>
+              {loading ? "Generating..." : "Start Quiz"}
             </button>
-
-            {error && <p className="text-red-400 mt-4">⚠️ {error}</p>}
+            {error && <p style={{ color: "#ff6b6b", marginTop: "1rem", fontSize: "0.85rem" }}>{error}</p>}
           </div>
         )}
 
         {/* Quiz questions */}
         {started && !finished && quiz.length > 0 && (
           <div>
-
-            {/* Progress */}
             <div className="flex items-center justify-between mb-6">
-              <span className="text-gray-400 text-sm">
-                Question {current + 1} of {quiz.length}
-              </span>
-
+              <span className="text-gray-400 text-sm">Question {current + 1} of {quiz.length}</span>
               <div className="flex gap-1">
                 {quiz.map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1.5 w-8 rounded-full transition-colors ${
-                      i < current
-                        ? "bg-indigo-500"
-                        : i === current
-                        ? "bg-indigo-400"
-                        : "bg-gray-700"
-                    }`}
-                  />
+                  <div key={i} className={`h-1.5 w-8 rounded-full transition-colors ${
+                    i < current ? "bg-indigo-500" : i === current ? "bg-indigo-400" : "bg-gray-700"
+                  }`} />
                 ))}
               </div>
             </div>
 
-            {/* Question */}
             <div className="bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-xl p-6 mb-4">
-              <p className="text-white font-medium leading-relaxed">
-                {quiz[current].question}
-              </p>
+              <p className="text-white font-medium leading-relaxed">{quiz[current].question}</p>
             </div>
 
-            {/* Options */}
             <div className="space-y-3 mb-6">
               {Object.entries(quiz[current].options).map(([key, value]) => (
-                <div
-                  key={key}
-                  onClick={() => handleSelect(key)}
-                  className={`border rounded-xl px-5 py-4 flex items-center gap-4 transition-all ${optionStyles(
-                    key
-                  )}`}
-                >
-                  <span
-                    className={`text-sm font-bold w-6 h-6 rounded-full flex items-center justify-center border ${
-                      selected ? "border-current" : "border-gray-600"
-                    }`}
-                  >
-                    {key}
-                  </span>
-
+                <div key={key} onClick={() => handleSelect(key)}
+                  className={`border rounded-xl px-5 py-4 flex items-center gap-4 transition-all ${optionStyles(key)}`}>
+                  <span className={`text-sm font-bold w-6 h-6 rounded-full flex items-center justify-center border ${
+                    selected ? "border-current" : "border-gray-600"
+                  }`}>{key}</span>
                   <span className="text-sm">{value}</span>
-
-                  {selected && key === quiz[current].answer && (
-                    <span className="ml-auto text-green-400">✓</span>
-                  )}
-
-                  {selected &&
-                    key === selected &&
-                    key !== quiz[current].answer && (
-                      <span className="ml-auto text-red-400">✗</span>
-                    )}
+                  {selected && key === quiz[current].answer && <span className="ml-auto text-green-400">✓</span>}
+                  {selected && key === selected && key !== quiz[current].answer && <span className="ml-auto text-red-400">✗</span>}
                 </div>
               ))}
             </div>
 
-            <button
-              onClick={handleNext}
-              disabled={!selected}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors"
-            >
-              {current + 1 >= quiz.length
-                ? "Finish Quiz"
-                : "Next Question →"}
+            <button onClick={handleNext} disabled={!selected} style={{
+              width: "100%", padding: "0.75rem",
+              background: selected ? "linear-gradient(135deg, #6339ff, #00d4ff)" : "rgba(255,255,255,0.05)",
+              border: "none", borderRadius: "12px", color: "#fff",
+              fontSize: "0.95rem", fontWeight: 600, cursor: selected ? "pointer" : "not-allowed",
+              fontFamily: "'DM Sans', sans-serif", opacity: selected ? 1 : 0.4,
+              transition: "all 0.2s"
+            }}>
+              {current + 1 >= quiz.length ? "Finish Quiz" : "Next Question →"}
             </button>
           </div>
         )}
 
         {/* Results */}
         {finished && (
-          <div className="text-center">
-            <div className="text-6xl mb-4">
-              {score === quiz.length
-                ? "🏆"
-                : score >= quiz.length / 2
-                ? "👍"
-                : "📖"}
-            </div>
-
-            <h2 className="text-3xl font-bold mb-2">
-              {score} / {quiz.length}
+          <div style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "20px", padding: "2.5rem 2rem",
+            textAlign: "center"
+          }}>
+            <h2 style={{
+              fontFamily: "'Syne', sans-serif", fontSize: "3rem",
+              fontWeight: 800, color: "#fff", margin: "0 0 0.5rem"
+            }}>
+              {score} <span style={{ color: "#4a4a6a", fontSize: "1.5rem" }}>/ {quiz.length}</span>
             </h2>
-
-            <p className="text-gray-400 mb-8">
-              {score === quiz.length
-                ? "Perfect score!"
-                : score >= quiz.length / 2
-                ? "Good job! Keep studying."
-                : "Keep reviewing your notes."}
+            <p style={{ color: "#4a4a6a", marginBottom: "2rem", fontSize: "0.95rem" }}>
+              {score === quiz.length ? "Perfect score!" : score >= quiz.length / 2 ? "Good job! Keep studying." : "Keep reviewing your notes."}
             </p>
 
-            {/* Review */}
-            <div className="text-left space-y-3 mb-8">
+            <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "2rem" }}>
               {answers.map((a, i) => (
-                <div
-                  key={i}
-                  className={`border rounded-xl p-4 ${
-                    a.isCorrect
-                      ? "border-green-800 bg-green-950"
-                      : "border-red-800 bg-red-950"
-                  }`}
-                >
-                  <p className="text-sm font-medium mb-2">{a.question}</p>
-
-                  <div className="flex gap-4 text-xs">
-                    <span
-                      className={
-                        a.isCorrect ? "text-green-400" : "text-red-400"
-                      }
-                    >
-                      Your answer: {a.selected} —{" "}
-                      {
-                        quiz.find((q) => q.question === a.question)
-                          ?.options[a.selected]
-                      }
+                <div key={i} style={{
+                  border: `1px solid ${a.isCorrect ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
+                  background: a.isCorrect ? "rgba(34,197,94,0.05)" : "rgba(239,68,68,0.05)",
+                  borderRadius: "12px", padding: "1rem"
+                }}>
+                  <p style={{ margin: "0 0 0.5rem", fontSize: "0.85rem", color: "#e0e0ff" }}>{a.question}</p>
+                  <div style={{ display: "flex", gap: "1rem", fontSize: "0.75rem", flexWrap: "wrap" }}>
+                    <span style={{ color: a.isCorrect ? "#4ade80" : "#f87171" }}>
+                      Your answer: {a.selected} — {quiz.find(q => q.question === a.question)?.options[a.selected]}
                     </span>
-
                     {!a.isCorrect && (
-                      <span className="text-green-400">
-                        Correct: {a.correct} —{" "}
-                        {
-                          quiz.find((q) => q.question === a.question)
-                            ?.options[a.correct]
-                        }
+                      <span style={{ color: "#4ade80" }}>
+                        Correct: {a.correct} — {quiz.find(q => q.question === a.question)?.options[a.correct]}
                       </span>
                     )}
                   </div>
@@ -255,15 +206,19 @@ const generateQuiz = async () => {
               ))}
             </div>
 
-            <button
-              onClick={handleRetry}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-semibold transition-colors"
-            >
+            <button onClick={handleRetry} style={{
+              width: "100%", padding: "0.75rem",
+              background: "linear-gradient(135deg, #6339ff, #00d4ff)",
+              border: "none", borderRadius: "12px", color: "#fff",
+              fontSize: "0.95rem", fontWeight: 600, cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif",
+              boxShadow: "0 8px 32px rgba(99,57,255,0.35)"
+            }}>
               Try Again
             </button>
           </div>
         )}
       </div>
     </div>
-  </div>
-)}
+  )
+}

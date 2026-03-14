@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react"
 import { api } from "../api"
-import PixelBlast from "../components/PixelBlast"
 import StarBorder from "../components/StarBorder"
-export default function Chat({ sessionId, documentId, filename, onFlashcards, onQuiz, onSummary,onBack }) {
+
+export default function Chat({ sessionId, documentId, filename, onFlashcards, onQuiz, onSummary, onBack }) {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
@@ -18,23 +18,24 @@ export default function Chat({ sessionId, documentId, filename, onFlashcards, on
   }, [messages])
 
   useEffect(() => {
-  const loadHistory = async () => {
-    if (!documentId) return
-    try {
-      const data = await api.get(`/messages/${documentId}`)
-      if (data.messages.length > 0) {
-        const formatted = data.messages.map(m => ({
-          role: m.role,
-          text: m.content
-        }))
-        setMessages(formatted)
+    const loadHistory = async () => {
+      if (!documentId) return
+      try {
+        const data = await api.get(`/messages/${documentId}`)
+        if (data.messages.length > 0) {
+          const formatted = data.messages.map(m => ({
+            role: m.role,
+            text: m.content
+          }))
+          setMessages(formatted)
+        }
+      } catch (err) {
+        console.error("Failed to load history:", err)
       }
-    } catch (err) {
-      console.error("Failed to load history:", err)
     }
-  }
-  loadHistory()
-}, [documentId])
+    loadHistory()
+  }, [documentId])
+
   const sendMessage = async () => {
     const query = input.trim()
     if (!query || loading) return
@@ -53,7 +54,7 @@ export default function Chat({ sessionId, documentId, filename, onFlashcards, on
     } catch (err) {
       setMessages(prev => [...prev, {
         role: "assistant",
-        text: "⚠️ Sorry, something went wrong. Try again.",
+        text: "Sorry, something went wrong. Try again.",
         error: true
       }])
     } finally {
@@ -68,134 +69,90 @@ export default function Chat({ sessionId, documentId, filename, onFlashcards, on
     }
   }
 
-return (
-  <div className="relative flex flex-col h-screen w-full text-white  overflow-hidden">
+  return (
+    <div className="relative flex flex-col h-screen w-full text-white overflow-hidden">
 
-    {/* PixelBlast Background */}
-    <div className="absolute inset-0 -z-10 pointer-events-none opacity-70">
-      <PixelBlast
-        variant="square"
-        pixelSize={4}
-        color="#7c3aed"
-        patternDensity={0.75}
-        speed={0.2}
-        edgeFade={0.8}
-      />
-    </div>
-
-    {/* Header */}
-    <div className="border-b border-gray-800 px-6 py-4 flex items-center gap-3 bg-black/30 backdrop-blur-md">
-
-      <button
-        onClick={onBack}
-        className="text-gray-400 hover:text-white text-sm transition-colors mr-2"
-      >
-        ← Back
-      </button>
-
-      
-
-      <div>
-        <h1 className="font-bold text-indigo-400">DocXBud</h1>
-        <p className="text-xs text-gray-500 truncate max-w-xs">{filename}</p>
-      </div>
-
-      <div className="ml-auto flex items-center gap-3">
-      <StarBorder
-  as="button"
-  onClick={onSummary}
-  className="text-xs"
->
-   Summary
-</StarBorder>
-
-<StarBorder
-  as="button"
-  onClick={onFlashcards}
-  className="text-xs"
->
-   Flashcards
-</StarBorder>
-
-<StarBorder
-  as="button"
-  onClick={onQuiz}
-  className="text-xs"
->
-   Quiz
-</StarBorder>
-        
-
-      </div>
-    </div>
-
-    {/* Messages */}
-    <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-      {messages.map((msg, i) => (
-        <div
-          key={i}
-          className={`flex ${
-            msg.role === "user" ? "justify-end" : "justify-start"
-          }`}
-        >
-          <div
-            className={`max-w-xl px-4 py-3 rounded-2xl text-sm leading-relaxed
-            ${
-              msg.role === "user"
-                ? "bg-indigo-600 text-white rounded-br-sm"
-                : msg.error
-                ? "bg-red-950 border border-red-800 text-red-300 rounded-bl-sm"
-                : "bg-gray-800 text-gray-100 rounded-bl-sm"
-            }`}
-          >
-            {msg.text}
-          </div>
-        </div>
-      ))}
-
-      {/* Typing indicator */}
-      {loading && (
-        <div className="flex justify-start">
-          <div className="bg-gray-800 px-4 py-3 rounded-2xl rounded-bl-sm">
-            <div className="flex gap-1 items-center h-4">
-              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div ref={bottomRef} />
-    </div>
-
-    {/* Input */}
-    <div className="border-t border-gray-800 px-4 py-4 bg-black/30 backdrop-blur-md">
-      <div className="flex gap-3 max-w-3xl mx-auto">
-
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask something about your notes..."
-          rows={1}
-          className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-indigo-500 placeholder-gray-500"
-        />
-
+      {/* Header */}
+      <div className="border-b border-white/5 px-6 py-4 flex items-center gap-3 backdrop-blur-md">
         <button
-          onClick={sendMessage}
-          disabled={!input.trim() || loading}
-          className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-semibold text-sm transition-colors"
+          onClick={onBack}
+          className="text-gray-400 hover:text-white text-sm transition-colors mr-2"
         >
-          Send
+          ← Back
         </button>
 
+        <div>
+          <h1 className="font-bold text-indigo-400">DocXBud</h1>
+          <p className="text-xs text-gray-500 truncate max-w-xs">{filename}</p>
+        </div>
+
+        <div className="ml-auto flex items-center gap-3">
+          <StarBorder as="button" onClick={onSummary} className="text-xs">
+            Summary
+          </StarBorder>
+          <StarBorder as="button" onClick={onFlashcards} className="text-xs">
+            Flashcards
+          </StarBorder>
+          <StarBorder as="button" onClick={onQuiz} className="text-xs">
+            Quiz
+          </StarBorder>
+        </div>
       </div>
 
-      <p className="text-center text-gray-600 text-xs mt-2">
-        Enter to send · Shift+Enter for new line
-      </p>
-    </div>
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-xl px-4 py-3 rounded-2xl text-sm leading-relaxed
+              ${msg.role === "user"
+                ? "bg-indigo-600 text-white rounded-br-sm"
+                : msg.error
+                  ? "bg-red-950 border border-red-800 text-red-300 rounded-bl-sm"
+                  : "bg-gray-800/80 backdrop-blur-sm text-gray-100 rounded-bl-sm"
+              }`}>
+              {msg.text}
+            </div>
+          </div>
+        ))}
 
-  </div>
-)}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="bg-gray-800/80 backdrop-blur-sm px-4 py-3 rounded-2xl rounded-bl-sm">
+              <div className="flex gap-1 items-center h-4">
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="border-t border-white/5 px-4 py-4 backdrop-blur-md">
+        <div className="flex gap-3 max-w-3xl mx-auto">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask something about your notes..."
+            rows={1}
+            className="flex-1 bg-gray-800/60 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-indigo-500 placeholder-gray-500"
+          />
+          <button
+            onClick={sendMessage}
+            disabled={!input.trim() || loading}
+            className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-semibold text-sm transition-colors"
+          >
+            Send
+          </button>
+        </div>
+        <p className="text-center text-gray-600 text-xs mt-2">
+          Enter to send · Shift+Enter for new line
+        </p>
+      </div>
+
+    </div>
+  )
+}

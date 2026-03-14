@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException,Depends
+from fastapi import FastAPI, UploadFile, File, HTTPException,Depends,Request
 from fastapi.middleware.cors import CORSMiddleware
 from auth import hash_password, verify_password, create_token, get_current_user
 from database import users_collection, documents_collection, messages_collection
@@ -9,9 +9,17 @@ from processor import chunk_text, build_vector_store, search_vector_store
 from agent import run_qa, run_flashcards,run_quiz,run_summary
 import fitz
 import uuid
-
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi.responses import JSONResponse
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
+app.state.limiter = limiter
 
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request, exc):
+    return JSONResponse(status_code=429, content={"detail": "Too many requests, slow down!"})
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -87,7 +95,9 @@ async def search(payload: dict):
     return {"query": query, "results": results}
 
 @app.post("/ask")
+@limiter.limit("10/minute")
 async def ask_question(
+    request: Request,
     payload: dict,
     current_user=Depends(get_current_user)
 ):
@@ -121,7 +131,8 @@ async def ask_question(
 
     return {"query": query, "answer": answer}
 @app.post("/flashcards")
-async def generate_flashcards(payload: dict,current_user=Depends(get_current_user)):
+@limiter.limit("5/minute")
+async def generate_flashcards(request: Request,payload: dict,current_user=Depends(get_current_user)):
     session_id = payload.get("session_id")
     if not session_id:
         raise HTTPException(status_code=400, detail="session_id is required")
@@ -129,7 +140,8 @@ async def generate_flashcards(payload: dict,current_user=Depends(get_current_use
     flashcards = run_flashcards(session_id)
     return {"flashcards": flashcards}
 @app.post("/quiz")
-async def generate_quiz(payload: dict,current_user=Depends(get_current_user)):
+@limiter.limit("5/minute")
+async def generate_quiz(request: Request,payload: dict,current_user=Depends(get_current_user)):
     session_id = payload.get("session_id")
     if not session_id:
         raise HTTPException(status_code=400, detail="session_id is required")
@@ -137,7 +149,8 @@ async def generate_quiz(payload: dict,current_user=Depends(get_current_user)):
     quiz = run_quiz(session_id)
     return {"quiz": quiz}
 @app.post("/summary")
-async def generate_summary(payload: dict, current_user=Depends(get_current_user)):
+@limiter.limit("5/minute")
+async def generate_summary(request: Request,payload: dict, current_user=Depends(get_current_user)):
     session_id = payload.get("session_id")
     if not session_id:
         raise HTTPException(status_code=400, detail="session_id is required")

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { api } from "../api"
-import PixelBlast from "../components/PixelBlast"
+
 export default function Summary({ sessionId, onBack }) {
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -19,131 +19,126 @@ export default function Summary({ sessionId, onBack }) {
     }
   }
 
-return (
-  <div className="relative min-h-screen w-full text-white overflow-hidden">
+  return (
+    <div className="relative min-h-screen w-full text-white overflow-hidden">
+      <div className="relative z-10 max-w-2xl mx-auto px-6 py-8">
 
-    {/* PixelBlast background */}
-    <div className="absolute inset-0 -z-10 pointer-events-none opacity-90">
-      <PixelBlast
-        variant="square"
-        pixelSize={4}
-        color="#4c1d95"
-        patternDensity={0.75}
-        speed={0.2}
-        edgeFade={0.8}
-      />
-    </div>
-
-    {/* Foreground UI */}
-    <div className="relative z-10 p-6">
-      <div className="max-w-2xl mx-auto">
-
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <button
-            onClick={onBack}
-            className="text-gray-400 hover:text-white transition-colors text-sm"
+        {/* Boxed header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(99,57,255,0.4)",
+          borderRadius: "16px", padding: "1rem 1.5rem",
+          marginBottom: "2rem"
+        }}>
+          <button onClick={onBack} style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(99,57,255,0.4)",
+            borderRadius: "8px", padding: "0.4rem 1rem",
+            color: "#6a6a8a", fontSize: "0.8rem", cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif", transition: "all 0.2s"
+          }}
+            onMouseEnter={e => { e.target.style.color = "#fff"; e.target.style.borderColor = "rgba(255,255,255,0.2)" }}
+            onMouseLeave={e => { e.target.style.color = "#6a6a8a"; e.target.style.borderColor = "rgba(255,255,255,0.08)" }}
           >
             ← Back
           </button>
-
-          <h1 className="text-2xl font-bold text-indigo-400">Summary</h1>
+          <h1 style={{
+            fontFamily: "'Syne', sans-serif", fontWeight: 700,
+            fontSize: "1.1rem", color: "#fff", margin: 0
+          }}>Summary</h1>
+          <div style={{ width: "80px" }} />
         </div>
 
-        {/* Start screen */}
+        {/* Generate screen */}
         {!summary && (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4"></div>
-
-            <p className="text-gray-400 mb-6">
+          <div style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(99,57,255,0.4)",
+            borderRadius: "20px", padding: "4rem 2rem",
+            textAlign: "center"
+          }}>
+            <p style={{ color: "#4a4a6a", marginBottom: "1.5rem", fontSize: "0.95rem" }}>
               Get a clean structured summary of your document
             </p>
-
-            <button
-              onClick={generateSummary}
-              disabled={loading}
-              className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 rounded-lg font-semibold transition-colors"
-            >
+            <button onClick={generateSummary} disabled={loading} style={{
+              padding: "0.75rem 2rem",
+              background: "linear-gradient(135deg, #6339ff,#3b5b61)",
+              border: "none", borderRadius: "12px", color: "#fff",
+              fontSize: "0.95rem", fontWeight: 600, cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif",
+              boxShadow: "0 8px 32px rgba(99,57,255,0.35)",
+              opacity: loading ? 0.5 : 1, transition: "all 0.2s"
+            }}>
               {loading ? "Summarizing..." : "Generate Summary"}
             </button>
-
-            {error && <p className="text-red-400 mt-4">⚠️ {error}</p>}
+            {error && <p style={{ color: "#ff6b6b", marginTop: "1rem", fontSize: "0.85rem" }}>{error}</p>}
           </div>
         )}
 
         {/* Summary content */}
         {summary && (
-          <div className="space-y-6">
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 
-            {/* Overview */}
-            <div className="bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-xl p-6">
-              <h2 className="text-indigo-400 font-semibold mb-3 flex items-center gap-2">
-                Overview
-              </h2>
-              <p className="text-gray-200 leading-relaxed">
-                {summary.overview}
-              </p>
-            </div>
-
-            {/* Topics Covered */}
-            <div className="bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-xl p-6">
-              <h2 className="text-indigo-400 font-semibold mb-3 flex items-center gap-2">
-                Topics Covered
-              </h2>
-
-              <div className="flex flex-wrap gap-2">
-                {summary.topics_covered?.map((topic, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1 bg-indigo-950 border border-indigo-800 rounded-full text-sm text-indigo-300"
-                  >
-                    {topic}
-                  </span>
-                ))}
+            {[
+              { title: "Overview", content: (
+                <p style={{ color: "#d0d0f0", lineHeight: 1.7, fontSize: "0.9rem", margin: 0 }}>{summary.overview}</p>
+              )},
+              { title: "Topics Covered", content: (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                  {summary.topics_covered?.map((topic, i) => (
+                    <span key={i} style={{
+                      padding: "0.3rem 0.85rem",
+                      background: "rgba(99,57,255,0.15)",
+                      border: "1px solid rgba(99,57,255,0.25)",
+                      borderRadius: "999px", fontSize: "0.8rem", color: "#a78bfa"
+                    }}>{topic}</span>
+                  ))}
+                </div>
+              )},
+              { title: "Key Concepts", content: (
+                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {summary.key_concepts?.map((concept, i) => (
+                    <li key={i} style={{ display: "flex", gap: "0.75rem", fontSize: "0.875rem", color: "#c0c0e0" }}>
+                      <span style={{ color: "#6339ff", flexShrink: 0 }}>▸</span>{concept}
+                    </li>
+                  ))}
+                </ul>
+              )},
+              { title: "Important Details", content: (
+                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {summary.important_details?.map((detail, i) => (
+                    <li key={i} style={{ display: "flex", gap: "0.75rem", fontSize: "0.875rem", color: "#c0c0e0" }}>
+                      <span style={{ color: "#00d4ff", flexShrink: 0 }}>•</span>{detail}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            ].map(({ title, content }) => (
+              <div key={title} style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: "16px", padding: "1.5rem"
+              }}>
+                <h2 style={{
+                  fontFamily: "'Syne', sans-serif", fontWeight: 600,
+                  fontSize: "0.85rem", color: "#6339ff", margin: "0 0 1rem",
+                  textTransform: "uppercase", letterSpacing: "0.08em"
+                }}>{title}</h2>
+                {content}
               </div>
-            </div>
+            ))}
 
-            {/* Key Concepts */}
-            <div className="bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-xl p-6">
-              <h2 className="text-indigo-400 font-semibold mb-3 flex items-center gap-2">
-                Key Concepts
-              </h2>
-
-              <ul className="space-y-2">
-                {summary.key_concepts?.map((concept, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-3 text-sm text-gray-300"
-                  >
-                    <span className="text-indigo-400 mt-0.5">▸</span>
-                    {concept}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Important Details */}
-            <div className="bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-xl p-6">
-              <h2 className="text-indigo-400 font-semibold mb-3 flex items-center gap-2">
-                Important Details
-              </h2>
-
-              <ul className="space-y-2">
-                {summary.important_details?.map((detail, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-3 text-sm text-gray-300"
-                  >
-                    <span className="text-yellow-500 mt-0.5">•</span>
-                    {detail}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <button
-              onClick={() => setSummary(null)}
-              className="w-full py-3 border border-gray-700 hover:border-indigo-500 rounded-lg text-gray-400 hover:text-white transition-colors text-sm"
+            <button onClick={() => setSummary(null)} style={{
+              width: "100%", padding: "0.75rem",
+              background: "transparent",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "12px", color: "#4a4a6a",
+              fontSize: "0.85rem", cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif", transition: "all 0.2s"
+            }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(99,57,255,0.4)"; e.currentTarget.style.color = "#fff" }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#4a4a6a" }}
             >
               Regenerate
             </button>
@@ -151,5 +146,5 @@ return (
         )}
       </div>
     </div>
-  </div>
-)}
+  )
+}

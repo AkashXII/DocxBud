@@ -1,14 +1,46 @@
-import { useState, useEffect,useRef} from "react"
+import { useState, useEffect, useRef } from "react"
 import { api } from "../api"
 import PixelBlast from "../components/PixelBlast"
 import { Button } from "../components/moving-border"
-export default function Dashboard({ email, onNewUpload, onResumeDoc, onLogout }) {
+
+export default function Dashboard({ email,  onResumeDoc, onLogout }) {
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState(null)
   const fileInputRef = useRef(null)
+
   const handleUploadClick = () => {
     fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.name.endsWith(".pdf")) {
+      setUploadError("Please upload a PDF file")
+      return
+    }
+    setUploading(true)
+    setUploadError(null)
+    const formData = new FormData()
+    formData.append("file", file)
+    try {
+      const data = await api.postForm("/upload", formData)
+      console.log("upload response:", data)  
+      onResumeDoc({
+        session_id: data.session_id,
+        _id: data.document_id,
+        filename: data.filename
+      })
+    } catch (err) {
+      setUploadError(err.message)
+    } finally {
+      setUploading(false)
+      // reset so same file can be re-uploaded
+      e.target.value = ""
+    }
   }
 
   useEffect(() => {
@@ -30,7 +62,6 @@ export default function Dashboard({ email, onNewUpload, onResumeDoc, onLogout })
     }
     fetchDocs()
   }, [])
-
   return (
     <div style={{
   minHeight: "100vh",
@@ -136,18 +167,13 @@ export default function Dashboard({ email, onNewUpload, onResumeDoc, onLogout })
     Upload Document
   </Button>
 
-  <input
-    ref={fileInputRef}
-    type="file"
-    accept=".pdf"
-    hidden
-    onChange={(e) => {
-      const file = e.target.files?.[0]
-      if (file) {
-        onNewUpload(file)
-      }
-    }}
-  />
+<input
+  ref={fileInputRef}
+  type="file"
+  accept=".pdf"
+  hidden
+  onChange={handleFileChange}
+/>
 </div>
         {/* Documents */}
         {loading && (
