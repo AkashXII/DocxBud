@@ -7,8 +7,6 @@ import os
 import json
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
-
-# ─── State ───────────────────────────────────────────────────
 class StudyState(TypedDict):
     session_id: str
     query: str
@@ -19,19 +17,18 @@ class StudyState(TypedDict):
     quiz: list[dict]
     summary: dict
 
-# ─── LLM ─────────────────────────────────────────────────────
 llm = ChatGroq(
     model="llama-3.1-8b-instant",
     api_key=os.getenv("GROQ_API_KEY")
 )
 
-# ─── Nodes ───────────────────────────────────────────────────
+#small fetch
 def retrieve_node(state: StudyState) -> StudyState:
     """Multi-query retrieval for QA — generates query variations for better coverage."""
     print(f"[retrieve_node] multi-query search for: {state['query']}")
     chunks = multi_query_search(state["session_id"], state["query"], llm)
     return {**state, "retrieved_chunks": chunks}
-
+#bigger fetch
 def retrieve_all_node(state: StudyState) -> StudyState:
     """For flashcards/quiz/summary — fetch broad chunks."""
     print(f"[retrieve_all_node] fetching broad chunks for {state['mode']}")
@@ -39,7 +36,7 @@ def retrieve_all_node(state: StudyState) -> StudyState:
     results = vector_store.similarity_search(state["query"], k=20)
     chunks = [doc.page_content for doc in results]
     return {**state, "retrieved_chunks": chunks}
-
+#for normal qa chatss
 def generate_answer_node(state: StudyState) -> StudyState:
     print("[generate_answer_node] generating...")
     context = "\n\n".join(state["retrieved_chunks"])
@@ -176,7 +173,7 @@ Context:
 
     return {**state, "summary": summary}
 
-# ─── Router ──────────────────────────────────────────────────
+#routers
 def route_by_mode(state: StudyState) -> str:
     if state["mode"] == "qa":
         return "retrieve"
@@ -194,7 +191,7 @@ def route_after_retrieval(state: StudyState) -> str:
         return "generate_summary"
     return "generate_answer"
 
-# ─── Build Graph ─────────────────────────────────────────────
+#GRAPH
 def build_graph():
     graph = StateGraph(StudyState)
 
@@ -219,7 +216,7 @@ def build_graph():
 
 study_graph = build_graph()
 
-# ─── Public API ──────────────────────────────────────────────
+#public api
 def run_qa(session_id: str, query: str) -> str:
     state = StudyState(
         session_id=session_id, query=query,

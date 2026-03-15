@@ -8,7 +8,7 @@ embeddings_model = HuggingFaceEmbeddings(
     model_name="all-MiniLM-L6-v2",
     model_kwargs={"device": "cpu"}
 )
-print("Embedding model loaded ✅")
+print("Embedding model loaded ")
 
 def chunk_text(text: str) -> list[str]:
     splitter = RecursiveCharacterTextSplitter(
@@ -43,7 +43,7 @@ def search_vector_store(session_id: str, query: str, k: int = 4) -> list[str]:
 def multi_query_search(session_id: str, query: str, llm, k: int = 4) -> list[str]:
     """Generate multiple queries from one question, retrieve chunks for each, merge."""
 
-    # Step 1 — Generate 3 variations of the query using LLM
+
     prompt = f"""Generate 3 different search queries to find information for this question.
 Return ONLY the 3 queries, one per line, nothing else.
 
@@ -54,9 +54,9 @@ Queries:"""
     response = llm.invoke(prompt)
     queries = [q.strip() for q in response.content.strip().split("\n") if q.strip()]
     queries = queries[:3]  # max 3
-    queries.append(query)  # always include original
+    queries.append(query)
 
-    # Step 2 — Search for each query, collect all chunks
+    
     all_chunks = []
     seen = set()
 
@@ -64,10 +64,10 @@ Queries:"""
         try:
             chunks = search_vector_store(session_id, q, k=k)
             for chunk in chunks:
-                if chunk not in seen:  # deduplicate
+                if chunk not in seen:  #deduplicate
                     seen.add(chunk)
                     all_chunks.append(chunk)
         except Exception:
             continue
 
-    return all_chunks[:12]  # cap at 12 chunks total
+    return all_chunks[:12]  
